@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-monitor = open("E:\\Arduino\\dht1\\dht_thunghiem.txt", "r")
+monitor = open("E:\\Arduino\\_VISEF2017_\\_experimental\\DHT11\\monitor.txt", "r")
 
 temp = []
 hum = []
