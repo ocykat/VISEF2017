@@ -30,8 +30,11 @@ void setup() {
 		Serial.println("RTC is NOT running!");
 	}
 	
+	// Adjust time
+	// reset the clock
+	rtc.adjust(DateTime(2000, 1, 1, 0, 0, 0));
+	// adjust the clock according to the computer
 	rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-	// rtc.adjust(DateTime(2013, 1, 1, 0, 0, 0));
 	// Set up VCCs
 
 	pinMode(VCC1, OUTPUT);
@@ -49,7 +52,6 @@ String TwoChar(int data_num) {
 }
 
 void loop() {
-
 	DateTime now = rtc.now();
 	String day, month, year, hour, minute, second;
 	String weekday[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
