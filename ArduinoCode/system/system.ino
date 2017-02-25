@@ -443,6 +443,7 @@ void Serial_Monitor() {
         Serial.print("+ TDS: ");
         Serial.print("Temp: " + String(tds_temp_read()) + "C; ");
         Serial.println("Conc: " + String(tds_EC_read()) + "ppm");
+        Serial.println("**********************************************");
     }
 }
 
