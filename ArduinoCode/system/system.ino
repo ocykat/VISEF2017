@@ -66,6 +66,12 @@ bool lcd_TimeLocked = true;
 const int lcd_LockTime = 1;
 const int lcd_DelayTime = 0;
 
+// Serial
+unsigned long Serial_lastActiveTime;
+bool Serial_TimeLocked = true;
+const int Serial_LockTime = 1;
+const int Serial_DelayTime = 0;
+
 void Timer(unsigned long &LastActiveTime, bool &TimeLocked, int LockTime, int DelayTime) {
     if ((CurrentTime > LastActiveTime) && (CurrentTime <= LastActiveTime + LockTime)) {
         TimeLocked = true;
@@ -305,6 +311,7 @@ DateTime now = rtc.now();
 
 // Set up RTC
 void rtc_setup() {
+    rtc.begin();
     rtc.adjust(DateTime(2000, 1, 1, 0, 0, 0));
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 }
@@ -396,11 +403,53 @@ void lcd_control() {
     }
 }
 
+void Serial_Monitor() {
+    if (!Serial_TimeLocked) {
+        // Check RTC
+        if (! rtc.isrunning()) {
+            Serial.println("+ RTC: NOT running!");
+        }
+        else {
+            Serial.println("+ RTC: OK!");
+        }
 
+        // Read PIR
+        if (pir_read() == HIGH) {
+            Serial.println("+ PIR: Detecting motion!");
+        }
+        else {
+            Serial.println("+ PIR: Motion not detected");
+        }
+
+        // Read WLS
+        switch (wls_read()) {
+            case -1:
+                Serial.println("+ WLS: Below LB!");
+                break;
+            case 0:
+                Serial.println("+ WLS: Between LB and UB!");
+                break;
+            case 1:
+                Serial.println("+ WLS: Above UB!");
+                break;
+        }
+
+        // Read DHT11
+        Serial.print("+ DHT11: ");
+        Serial.print("Temp: " + String(dht11_temp_result()) + "C; ");
+        Serial.println("Humd: " + String(dht11_humd_result()) + "%");
+
+        // Read TDS
+        Serial.print("+ TDS: ");
+        Serial.print("Temp: " + String(tds_temp_read()) + "C; ");
+        Serial.println("Conc: " + String(tds_EC_read()) + "ppm");
+    }
+}
 
 /* ========== MAIN PROGRAM ========== */
 
 void setup() {
+    Serial.begin(9600);
     relay_setup();
     pir_setup();
     wls_setup();
@@ -419,6 +468,7 @@ void loop() {
         dht11_LastActiveTime = CurrentTime - 295;
         tds_LastActiveTime = CurrentTime;
         lcd_LastActiveTime = CurrentTime;
+        Serial.println("Starting...");
         delay(3000);
         FirstTime = false;
     }
