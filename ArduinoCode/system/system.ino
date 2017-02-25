@@ -482,5 +482,6 @@ void loop() {
         wls_read();
         dht11_read();
         lcd_control();
+        Serial_Monitor();
     }
 }
