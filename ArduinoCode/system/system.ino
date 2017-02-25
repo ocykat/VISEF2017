@@ -332,7 +332,6 @@ String TwoChar(int data_num) {
 
 // Showing time
 void lcd_control() {
-	DateTime now = rtc.now();
 	static int lcd_TimeTracker = 0;
 	if (!lcd_TimeLocked) {
 		lcd_TimeTracker++;
@@ -380,7 +379,7 @@ void lcd_control() {
 					lcd.print("DuDung");
 					break;
 				case 1:
-					lcd.print("QuaDay");
+					lcd.print("QuaDay!");
 					break;
 			}
 			if (lcd_TimeTracker == 9) {
