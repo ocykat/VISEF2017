@@ -11,6 +11,7 @@ Arduino model: UNO
 
 RTC_DS1307 rtc;
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
+DateTime now = rtc.now();
 
 const int VCC1 = 8;
 const int VCC2 = 9;

@@ -16,7 +16,7 @@ void setup() {
 }
 
 void dht11_control() {
-		// Printing out temperature on Serial monitor
+	// Printing out temperature on Serial monitor
 	dht11.read11(dht11_out_pin);
 	Serial.print("Nhiet do: ");
 	Serial.print(dht11.temperature);
@@ -30,6 +30,9 @@ void dht11_control() {
 	else if (dht11.temperature > 24) {
 		Serial.println("Nhiet do cao hon muc ly tuong cho cay!");
 	}
+	else {
+		Serial.println("Nhiet do dam bao!")
+	}
 
 	// Printing out temperature on Serial monitor
 	Serial.print("Humidity:");
@@ -39,6 +42,9 @@ void dht11_control() {
 	// Checking if the humidity is in the optimum range: >40%
 	if (dht11.humidity <= 40) {
 		Serial.println("Do am thap hon muc ly tuong cho cay!");
+	}
+	else {
+		Serial.println("Do am dam bao!");
 	}
 
 	// Wait for 2 seconds before reading new signal

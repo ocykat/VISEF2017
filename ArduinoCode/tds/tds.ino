@@ -10,7 +10,7 @@ const int tds_EC_R_chosen = 1000; // any resistor with the resistance of >300 oh
 const int tds_EC_R_pin = 25; // resistance of the pin
 
 // tds_EC pins
-const int tds_EC_out_pin = A3;
+const int tds_EC_Aout_pin = A3; // analog OUT
 const int tds_EC_gnd_pin = 32;
 const int tds_EC_vcc_pin = 33;
 
@@ -55,7 +55,7 @@ void setup() {
 	pinMode(tds_EC_gnd_pin, OUTPUT);
 	digitalWrite(tds_EC_gnd_pin, LOW);
 
-	pinMode(tds_EC_out_pin, INPUT);
+	pinMode(tds_EC_Aout_pin, INPUT);
 
 	tds_temp_sensor.begin();
 }
@@ -71,7 +71,7 @@ void loop() {
 	// Read EC's analog input twice, since first read returns incorrect result
 	float tds_EC_V_raw;
 	for (int i = 0; i < 2; i++) {
-		tds_EC_V_raw = analogRead(tds_EC_out_pin);
+		tds_EC_V_raw = analogRead(tds_EC_Aout_pin);
 	}
 	digitalWrite(tds_EC_vcc_pin, LOW);
 
