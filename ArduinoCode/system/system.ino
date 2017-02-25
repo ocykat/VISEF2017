@@ -39,7 +39,8 @@ const int tds_temp_vcc_pin = 49;
 const int tds_temp_gnd_pin = 50;
 
 /* ======== Time Management ======== */
-int CurrentTime;
+// Current time recorder
+unsigned long CurrentTime;
 
 // Pump
 unsigned long relay_pump_LastActiveTime;
@@ -92,11 +93,11 @@ void relay_setup() {
 }
 
 void relay_led_control() {
-	if (DayMode) {
+	if (DayMode()) {
 		digitalWrite(relay_led_pin, HIGH);
 	}
 	else {
-		if (pir_read == HIGH) {
+		if (pir_read() == HIGH) {
 			digitalWrite(relay_led_pin, LOW);
 		}
 		else {
@@ -369,7 +370,7 @@ void lcd_control() {
 		else if (lcd_TimeTracker <= 6) {
 			lcd.setCursor(1, 1);
 			lcd.print("DD  " + String(tds_temp_read()) + "C  " + String(tds_EC_read()) + "ppm");
-			if ((tds_EC_read < 500) || (tds_EC_read > 800)) {
+			if ((tds_EC_read() < 500) || (tds_EC_read() > 800)) {
 				lcd.setCursor(16, 1);
 				lcd.print("!");
 			}
@@ -410,7 +411,7 @@ void setup() {
 
 void loop() {
 	DateTime now = rtc.now();
-	unsigned long CurrentTime = now.secondstime();
+	CurrentTime = now.secondstime();
 	static bool FirstTime = true;
 
 	if (FirstTime) {
