@@ -1,3 +1,9 @@
+/*
+Thuc Hanh High school - HCMUE
+A project on Household Aeroponic System
+Arduino Model: Arduino Mega 2560
+*/
+
 /* ====== PIN LIST ====== */
 
 // LED Relays
