@@ -358,11 +358,11 @@ void lcd_control() {
 		if (lcd_TimeTracker <= 3) {
 			lcd.setCursor(3, 1);
 			lcd.print("KK  " + String(dht11_temp_result()) + "C  " + String(dht11_humd_result()) + "%");
-			if ((dht11_temp_result < 19) || (dht11_temp_result > 24)) {
+			if ((dht11_temp_result() < 19) || (dht11_temp_result() > 24)) {
 				lcd.setCursor(10, 1);
 				lcd.print("!");
 			}
-			if ((dht11_humd_result) <= 40) {
+			if ((dht11_humd_result()) <= 40) {
 				lcd.setCursor(15, 1);
 				lcd.print("!");
 			}
