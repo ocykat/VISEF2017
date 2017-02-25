@@ -11,16 +11,16 @@ readcnt = 0
 timetracker = 0
 
 for line in monitor:
-    linecnt+= 1
-    if linecnt % 6 == 1:
-        index = float(line)
-        temp.append(index)
-        readcnt += 1
-        timetracker += 2;
-        time.append(timetracker);
-    if linecnt % 6 == 3:
-        index = float(line)
-        hum.append(index)
+	linecnt+= 1
+	if linecnt % 6 == 1:
+		index = float(line)
+		temp.append(index)
+		readcnt += 1
+		timetracker += 2;
+		time.append(timetracker);
+	if linecnt % 6 == 3:
+		index = float(line)
+		hum.append(index)
 
 # Graph
 # Temperature graph
