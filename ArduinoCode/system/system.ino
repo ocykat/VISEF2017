@@ -406,7 +406,7 @@ void lcd_control() {
 void Serial_Monitor() {
     if (!Serial_TimeLocked) {
         // Check RTC
-        if (! rtc.isrunning()) {
+        if (!rtc.isrunning()) {
             Serial.println("+ RTC: NOT running!");
         }
         else {
@@ -478,6 +478,7 @@ void loop() {
         Timer(dht11_LastActiveTime, dht11_TimeLocked, dht11_LockTime, dht11_DelayTime);
         Timer(tds_LastActiveTime, tds_TimeLocked, tds_LockTime, tds_DelayTime);     
         Timer(lcd_LastActiveTime, lcd_TimeLocked, lcd_LockTime, lcd_DelayTime);
+        Timer(Serial_lastActiveTime, Serial_TimeLocked, Serial_LockTime, Serial_DelayTime);
         relay_led_control();
         relay_pump_control();
         wls_read();
