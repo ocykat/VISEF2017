@@ -11,18 +11,19 @@ Arduino model: UNO
 
 RTC_DS1307 rtc;
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
-DateTime now = rtc.now();
 
 const int VCC1 = 8;
 const int VCC2 = 9;
+const int VCC3 = 3;
 
 void setup() {
-
+    Serial.begin(9600);
     // Initialize LCD
     lcd.begin();
     lcd.backlight();
 
     // Check and set up rtc
+    rtc.begin();
     if (! rtc.begin()) {
         Serial.println("Couldn't find RTC");
     }
@@ -33,15 +34,17 @@ void setup() {
     
     // Adjust time
     // reset the clock
-    rtc.adjust(DateTime(2000, 1, 1, 0, 0, 0));
+    // rtc.adjust(DateTime(2013, 1, 1, 0, 0, 0));
     // adjust the clock according to the computer
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
     // Set up VCCs
 
     pinMode(VCC1, OUTPUT);
     pinMode(VCC2, OUTPUT);
+    pinMode(VCC3, OUTPUT);
     digitalWrite(VCC1, HIGH);
     digitalWrite(VCC2, HIGH);
+    digitalWrite(VCC3, HIGH);
 }
 
 String TwoChar(int data_num) {
@@ -53,7 +56,10 @@ String TwoChar(int data_num) {
 }
 
 void loop() {
+    Serial.println("BEGINNNNN");
     DateTime now = rtc.now();
+
+    Serial.println(now.secondstime());
     String day, month, year, hour, minute, second;
     String weekday[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 
@@ -72,5 +78,5 @@ void loop() {
 
     int prev_time = now.secondstime();
     now = rtc.now();
-    while (now.secondstime() - prev_time <= 1) {}
+    delay(1000);
 }
