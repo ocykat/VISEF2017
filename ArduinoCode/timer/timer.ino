@@ -9,14 +9,14 @@ const int led_LockTime = 500;
 const int led_OperateTime = 1000;
 unsigned long CurrentTime;
 
-void Timer(unsigned long &LastActiveTime, bool &TimeLocked, int LockTime, int OperateTime) {
-    if ((CurrentTime > LastActiveTime) && (CurrentTime <= LastActiveTime + LockTime)) {
-        TimeLocked = true;
+void Timer(unsigned long &LastActive, bool &Locked, int LockTime, int OperateTime) {
+    if ((CurrentTime < LastActive + LockTime)) {
+        Locked = true;
     }
     else {
-        TimeLocked = false;
-        if (CurrentTime >= LastActiveTime + LockTime + OperateTime) {
-            LastActiveTime = CurrentTime;
+        Locked = false;
+        if (CurrentTime >= LastActive + LockTime + OperateTime) {
+            LastActive = CurrentTime;
         }
     }
 }

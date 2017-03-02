@@ -13,250 +13,165 @@ const int relay_pump_pin = 6;
 const int relay_gnd_pin = 7;
 
 // PIR
-const int pir_vcc_pin = 28;
-const int pir_out_pin = 30;
-const int pir_gnd_pin = 32;
-
-// WLS
-const int wls_lb_pin = 36;
-const int wls_ub_pin = 38;
-const int wls_gnd1_pin = 40;
-const int wls_gnd2_pin = 42;
+const int pir_vcc_pin = 22;
+const int pir_out_pin = 24;
+const int pir_gnd_pin = 26;
 
 // DHT11
-const int dht11_vcc_pin = 22;
-const int dht11_out_pin = 24;
-const int dht11_gnd_pin = 26;
+const int dht11_vcc_pin = 30;
+const int dht11_out_pin = 32;
+const int dht11_gnd_pin = 34;
+
+// WLS
+const int wls_lb_pin = 38;
+const int wls_ub_pin = 40;
+const int wls_gnd1_pin = 42;
+const int wls_gnd2_pin = 44;
 
 // TDS
-// tds_EC pins
-const int tds_EC_Aout_pin = A15; // analog OUT
-const int tds_EC_gnd_pin = 51;
-const int tds_EC_vcc_pin = 53;
 // tds_temp pins
 const int tds_onewire_bus = 48;
 const int tds_temp_vcc_pin = 49;
 const int tds_temp_gnd_pin = 50;
+// tds_EC pins
+const int tds_EC_Aout_pin = A15; // analog OUT
+const int tds_EC_gnd_pin = 51;
+const int tds_EC_vcc_pin = 53;
 
 /* ========== COMPONENT SPECIFICATION ========== */
 
 /* __________RTC__________ */
+// Libraries
 #include <Wire.h>
 #include <RTClib.h>
+
+// Object
 RTC_DS3231 rtc;
-DateTime now;
 
-// Set up RTC
-void rtc_setup() {
-	rtc.begin();
-	rtc.adjust(DateTime(2000, 1, 1, 0, 0, 0));
-	rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-}
-
-// Day/Night mode
-bool DayMode() {
-	if ((now.hour() >= 6) && (now.hour() <= 17)) {
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
-// Current time recorder
+// Time recorder
 unsigned long CurrentTime;
 
-// Serial
-unsigned long Serial_LastActive;
-bool Serial_Locked = true;
-const int Serial_LockTime = 1;
-const int Serial_OperateTime = 0;
+// Start/end of day - Day/night mode
+int DayStart = 6;
+int DayEnd = 18;
+bool DayMode;
+
+void rtc_setup() {
+    rtc.begin();
+    rtc.adjust(DateTime(2000, 1, 1, 0, 0, 0));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+}
 
 void Timer(unsigned long &LastActive, bool &Locked, int LockTime, int OperateTime) {
-	if ((CurrentTime <= LastActive + LockTime)) {
-		Locked = true;
-	}
-	else {
-		Locked = false;
-		if ((CurrentTime >= LastActive + LockTime + OperateTime) || (OperateTime == 0)) {
-			LastActive = CurrentTime;
-		}
-	}
+    if ((CurrentTime < LastActive + LockTime)) {
+        Locked = true;
+    }
+    else {
+        Locked = false;
+        if (CurrentTime >= LastActive + LockTime + OperateTime) {
+            LastActive = CurrentTime;
+        }
+    }
+}
+
+void DayModeCheck(int hour) {
+    if ((hour >= DayStart) && (hour <= DayEnd)) {
+        DayMode = true;
+    }
+    else {
+        DayMode = false;
+    }
+}
+
+/* __________PIR__________ */
+// Value
+int pir_val;
+
+void pir_setup() {
+    pinMode(pir_vcc_pin, OUTPUT);
+    digitalWrite(pir_vcc_pin, HIGH);
+
+    pinMode(pir_gnd_pin, OUTPUT);
+    digitalWrite(pir_gnd_pin, LOW);
+}
+
+void pir_read() {
+    pir_val = digitalRead(pir_out_pin);
 }
 
 /* __________Relay__________ */
-// Pump
+// Time management
 unsigned long relay_pump_LastActive;
-bool relay_pump_Locked = true;
+bool relay_pump_Locked;
 const int relay_pump_LockTime = 300;
 const int relay_pump_OperateTime = 5;
 
 void relay_setup() {
-	pinMode(relay_vcc_pin, OUTPUT);
-	digitalWrite(relay_vcc_pin, HIGH);
+    pinMode(relay_vcc_pin, OUTPUT);
+    digitalWrite(relay_vcc_pin, HIGH);
 
-	pinMode(relay_gnd_pin, OUTPUT);
-	digitalWrite(relay_gnd_pin, LOW);
+    pinMode(relay_gnd_pin, OUTPUT);
+    digitalWrite(relay_gnd_pin, LOW);
 
-	pinMode(relay_led_pin, OUTPUT);
-	pinMode(relay_pump_pin, OUTPUT);
+    pinMode(relay_led_pin, OUTPUT);
+
+    pinMode(relay_pump_pin, OUTPUT);
 }
 
 void relay_led_control() {
-	if (DayMode()) {
-		digitalWrite(relay_led_pin, HIGH);
-	}
-	else {
-		if (pir_read() == HIGH) {
-			digitalWrite(relay_led_pin, LOW);
-		}
-		else {
-			digitalWrite(relay_led_pin, HIGH);
-		}
-	}
+    if (DayMode) {
+        digitalWrite(relay_led_pin, HIGH);
+    }
+    else {
+        if (pir_val == HIGH) {
+            digitalWrite(relay_led_pin, HIGH);
+        }
+        else {
+            digitalWrite(relay_led_pin, LOW);
+        }
+    }
 }
 
 void relay_pump_control() {
-	if (!relay_pump_Locked) {
-		digitalWrite(relay_pump_pin, HIGH);
-	}
-}
-
-/* __________PIR__________ */
-void pir_setup() {
-	pinMode(pir_out_pin, INPUT);
-}
-
-int pir_read() {
-	return digitalRead(pir_out_pin);
-}
-
-/* __________WLS__________ */
-#include <QueueArray.h>
-
-int wls_waterlevel;
-
-void wls_setup() {
-	pinMode(wls_lb_pin, INPUT_PULLUP);
-	digitalWrite(wls_lb_pin, HIGH);
-	pinMode(wls_ub_pin, INPUT_PULLUP);
-	digitalWrite(wls_ub_pin, HIGH);
-
-	pinMode(wls_gnd1_pin, OUTPUT);
-	digitalWrite(wls_gnd1_pin, LOW);
-	pinMode(wls_gnd2_pin, OUTPUT);
-	digitalWrite(wls_gnd2_pin, LOW);
-}
-
-void wls_read(int &wls_waterlevel) {
-	// Digital inputs are converted to signals of 0 and 1
-	// 0 ~ circuit is opened; 1 ~ circuit is closed
-	int wls_lb_read;
-	int wls_ub_read;
-	
-	// A queue for each sensor
-	static QueueArray <int> wls_lb_sigqueue;
-	static QueueArray <int> wls_ub_sigqueue;
-
-	// Set variables to count LOW signals from the input pins
-	static int wls_lb_lsigcnt = 0;
-	static int wls_ub_lsigcnt = 0;
-
-	// Read sensor 
-	int wls_lb_val = digitalRead(wls_lb_pin);
-	int wls_ub_val = digitalRead(wls_ub_pin);
-
-	// Append signals to the queue
-	wls_lb_sigqueue.enqueue(wls_lb_val);
-	wls_ub_sigqueue.enqueue(wls_ub_val);
-	
-	// Count LOW signals from input pins
-	if (wls_lb_val == LOW) {
-		wls_lb_lsigcnt++;
-	}
-	if (wls_ub_val == LOW) {
-		wls_ub_lsigcnt++;
-	}
-
-	// For the filter to start, the first 100 signals must be appended to each queue
-	if (wls_lb_sigqueue.count() == 100) {   
-	
-		// Set accuracy rate at >30/100 signals
-		if (wls_lb_lsigcnt <= 30) {
-			wls_lb_read = 0;
-		}
-		else {
-			wls_lb_read = 1;
-		}
-
-		if (wls_ub_lsigcnt <= 30) {
-			wls_ub_read = 0;
-		}
-		else {
-			wls_ub_read = 1;
-		}
-
-		// Remove the first element of each queue
-		if (wls_lb_sigqueue.front() == LOW) {
-			wls_lb_lsigcnt--;
-		}
-
-		if (wls_ub_sigqueue.front() == LOW) {
-			wls_ub_lsigcnt--;
-		}
-
-		wls_lb_sigqueue.dequeue();
-		wls_ub_sigqueue.dequeue();
-
-		// Return water level
-		wls_waterlevel = -1 + wls_lb_read + wls_ub_read;
-	}
-	else {
-		wls_waterlevel = 2;
-	}
+    if (!relay_pump_Locked) {
+        digitalWrite(relay_pump_pin, HIGH);
+    }
+    else {
+        digitalWrite(relay_pump_pin, LOW);
+    }
 }
 
 /* __________DHT11__________ */
+// Library
 #include <dht.h>
 
-// Time management
-unsigned long dht11_LastActive;
-bool dht11_Locked = true;
-const int dht11_LockTime = 2;
-const int dht11_OperateTime = 0;
+// Object
+dht dht11;
 
-dht dht11; //dht object
-
+// Values
 int dht11_temp;
 int dht11_humd;
 
-void dht11_read(int &dht11_temp, int &dht11_humd) {
-	if (!dht11_Locked) {
-		int check = dht11.read(dht11_out_pin);
-		delay(2000);
-		check = dht11.read(dht11_out_pin);
+// Time management
+unsigned long dht11_LastActive;
+bool dht11_Locked;
+const int dht11_LockTime = 2;
+const int dht11_OperateTime = 0;
 
-		switch (check) {
-			case DHTLIB_OK:  
-				Serial.print("OK,\t"); 
-				break;
-			case DHTLIB_ERROR_CHECKSUM: 
-				Serial.print("Checksum error,\t"); 
-				break;
-			case DHTLIB_ERROR_TIMEOUT: 
-				Serial.print("Time out error,\t"); 
-				break;
-			default: 
-				Serial.print("Unknown error,\t"); 
-				break;
-		}
-		dht11_temp = (int) dht11.temperature;
-		dht11_humd = (int) dht11.humidity;
-		// ERROR CHECK
-		if ((dht11_temp > 50) || (dht11_temp < 0)) {
-			Serial.println("DHT11_ERROR!!!");
-		}
-	}
+void dht11_setup() {
+    pinMode(dht11_vcc_pin, OUTPUT);
+    digitalWrite(dht11_vcc_pin, HIGH);
+
+    pinMode(dht11_gnd_pin, OUTPUT);
+    digitalWrite(dht11_gnd_pin, LOW);
+}
+
+void dht11_read() {
+    if (!dht11_Locked) {
+        dht11.read11(dht11_out_pin);
+        dht11_temp = dht11.temperature;
+        dht11_humd = dht11.humidity;
+    }
 }
 
 /* __________TDS__________ */
@@ -272,13 +187,13 @@ const float tds_EC_PPM_conversion = 0.7; // EC to PPM conversion constant
 const float tds_EC_tempcoef = 0.019; // Temperature coefficient
 const float tds_EC_K = 2.88;
 
-// Initialize libraries' objects
+// Objects
 OneWire tds_onewire(tds_onewire_bus);
 DallasTemperature tds_temp_sensor(&tds_onewire);
 
 // Time management
 unsigned long tds_LastActive;
-bool tds_Locked = true;
+bool tds_Locked;
 const int tds_LockTime = 10;
 const int tds_OperateTime = 0;
 
@@ -287,229 +202,401 @@ int tds_temp_temperature;
 int tds_EC_ppm;
 
 void tds_setup() {
-	// Set up TDS Temperature sensor pins
-	pinMode(tds_temp_vcc_pin, OUTPUT);
-	digitalWrite(tds_temp_vcc_pin, HIGH);
+    // Set up TDS Temperature sensor pins
+    pinMode(tds_temp_vcc_pin, OUTPUT);
+    digitalWrite(tds_temp_vcc_pin, HIGH);
 
-	pinMode(tds_temp_gnd_pin, OUTPUT);
-	digitalWrite(tds_temp_gnd_pin, LOW);
+    pinMode(tds_temp_gnd_pin, OUTPUT);
+    digitalWrite(tds_temp_gnd_pin, LOW);
 
-	// Set up TDS EC sensor pins
-	pinMode(tds_EC_vcc_pin, OUTPUT);
+    // Set up TDS EC sensor pins
+    pinMode(tds_EC_vcc_pin, OUTPUT);
 
-	pinMode(tds_EC_gnd_pin, OUTPUT);
-	digitalWrite(tds_EC_gnd_pin, LOW);
+    pinMode(tds_EC_gnd_pin, OUTPUT);
+    digitalWrite(tds_EC_gnd_pin, LOW);
 
-	pinMode(tds_EC_Aout_pin, INPUT);
+    pinMode(tds_EC_Aout_pin, INPUT);
 
-	tds_temp_sensor.begin();
+    tds_temp_sensor.begin();
 }
 
-void tds_read(int &tds_temp_temperature, int &tds_EC_ppm) {
-	if (!tds_Locked) {
-		// _*Temperature sensor*_
-		// Read solution's temperature
-		tds_temp_sensor.requestTemperatures();
-		tds_temp_temperature = tds_temp_sensor.getTempCByIndex(0);
-		
-		// _*EC sensor*_
-		// Provide tds_EC_vcc_pin with HIGH voltage to start measuring
-		// Then stop after measurement has been done
-		digitalWrite(tds_EC_vcc_pin, HIGH);
-		// Read EC's analog input twice, since first read returns incorrect result
-		float tds_EC_V_raw;
-		for (int i = 0; i < 2; i++) {
-			tds_EC_V_raw = analogRead(tds_EC_Aout_pin);
-		}
-		digitalWrite(tds_EC_vcc_pin, LOW);
+void tds_read() {
+    if (!tds_Locked) {
+        // _*Temperature sensor*_
+        // Read solution's temperature
+        tds_temp_sensor.requestTemperatures();
+        tds_temp_temperature = tds_temp_sensor.getTempCByIndex(0);
+        
+        // _*EC sensor*_
+        // Provide tds_EC_vcc_pin with HIGH voltage to start measuring
+        // Then stop after measurement has been done
+        digitalWrite(tds_EC_vcc_pin, HIGH);
+        // Read EC's analog input twice, since first read returns incorrect result
+        float tds_EC_V_raw;
+        for (int i = 0; i < 2; i++) {
+            tds_EC_V_raw = analogRead(tds_EC_Aout_pin);
+        }
+        digitalWrite(tds_EC_vcc_pin, LOW);
 
-		// Calculations
-		float tds_EC_V_in = 5;
-		float tds_EC_V_drop = (tds_EC_V_in * tds_EC_V_raw) / 1024.0;
-		// Solution's resistance
-		float tds_EC_R_solution = (tds_EC_V_drop * tds_EC_R_chosen) / (tds_EC_V_in - tds_EC_V_drop) - tds_EC_R_pin;
-		// Solution's electrical conductivity
-		float tds_EC_ECval = 1000 / (tds_EC_R_solution * tds_EC_K);
-		// Solution's electrical conductivity at 25 degree Celcius
-		float tds_EC_EC25val = tds_EC_ECval / (1 + tds_EC_tempcoef * (tds_temp_temperature - 25.0));
-		// Solution's ppm
-		tds_EC_ppm = (tds_EC_EC25val) * (tds_EC_PPM_conversion * 1000);
-	}
+        // Calculations
+        float tds_EC_V_in = 5;
+        float tds_EC_V_drop = (tds_EC_V_in * tds_EC_V_raw) / 1024.0;
+        // Solution's resistance
+        float tds_EC_R_solution = (tds_EC_V_drop * tds_EC_R_chosen) / (tds_EC_V_in - tds_EC_V_drop) - tds_EC_R_pin;
+        // Solution's electrical conductivity
+        float tds_EC_ECval = 1000 / (tds_EC_R_solution * tds_EC_K);
+        // Solution's electrical conductivity at 25 degree Celcius
+        float tds_EC_EC25val = tds_EC_ECval / (1 + tds_EC_tempcoef * (tds_temp_temperature - 25.0));
+        // Solution's ppm
+        tds_EC_ppm = (tds_EC_EC25val) * (tds_EC_PPM_conversion * 1000);
+    }
+}
+
+/* __________WLS__________ */
+#include <QueueArray.h>
+
+// Waterlevel
+int wls_waterlevel;
+
+void wls_setup() {
+    pinMode(wls_lb_pin, INPUT_PULLUP);
+    pinMode(wls_ub_pin, INPUT_PULLUP);
+
+    pinMode(wls_gnd1_pin, OUTPUT);
+    digitalWrite(wls_gnd1_pin, LOW);
+    pinMode(wls_gnd2_pin, OUTPUT);
+    digitalWrite(wls_gnd2_pin, LOW);
+}
+
+void wls_read() {
+    if (tds_Locked) {
+        // Pull pins to HIGH
+        digitalWrite(wls_lb_pin, HIGH);
+        digitalWrite(wls_ub_pin, HIGH);
+
+        // Digital inputs are converted to signals of 0 and 1
+        // 0 ~ circuit is opened; 1 ~ circuit is closed
+        int wls_lb_read;
+        int wls_ub_read;
+        
+        // A queue for each sensor
+        static QueueArray <int> wls_lb_sigqueue;
+        static QueueArray <int> wls_ub_sigqueue;
+
+        // Set variables to count LOW signals from the input pins
+        static int wls_lb_lsigcnt = 0;
+        static int wls_ub_lsigcnt = 0;
+
+        // Read sensor 
+        int wls_lb_val = digitalRead(wls_lb_pin);
+        int wls_ub_val = digitalRead(wls_ub_pin);
+
+        // Append signals to the queue
+        wls_lb_sigqueue.enqueue(wls_lb_val);
+        wls_ub_sigqueue.enqueue(wls_ub_val);
+        
+        // Count LOW signals from input pins
+        if (wls_lb_val == LOW) {
+            wls_lb_lsigcnt++;
+        }
+        if (wls_ub_val == LOW) {
+            wls_ub_lsigcnt++;
+        }
+
+        // For the filter to start, the first 100 signals must be appended to each queue
+        if (wls_lb_sigqueue.count() == 100) {   
+        
+            // Set accuracy rate at >30/100 signals
+            if (wls_lb_lsigcnt <= 30) {
+                wls_lb_read = 0;
+            }
+            else {
+                wls_lb_read = 1;
+            }
+
+            if (wls_ub_lsigcnt <= 30) {
+                wls_ub_read = 0;
+            }
+            else {
+                wls_ub_read = 1;
+            }
+
+            // Remove the first element of each queue
+            if (wls_lb_sigqueue.front() == LOW) {
+                wls_lb_lsigcnt--;
+            }
+
+            if (wls_ub_sigqueue.front() == LOW) {
+                wls_ub_lsigcnt--;
+            }
+
+            wls_lb_sigqueue.dequeue();
+            wls_ub_sigqueue.dequeue();
+
+            // Return water level
+            wls_waterlevel = -1 + wls_lb_read + wls_ub_read;
+        }
+        else {
+            wls_waterlevel = 2;
+        }
+    }
+    else {
+        digitalWrite(wls_lb_pin, LOW);
+        digitalWrite(wls_ub_pin, LOW);
+    }
 }
 
 /* __________LCD__________ */
+// Libraries
 #include <LiquidCrystal_I2C.h>
+
+// Object
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 // Time management
 unsigned long lcd_LastActive;
-bool lcd_Locked = true;
+bool lcd_Locked;
 const int lcd_LockTime = 1;
 const int lcd_OperateTime = 0;
 
-// Set up
+// Tracker - determine the 2nd line
+int lcd_tracker = 0;
+
 void lcd_setup() {
-	lcd.begin();
-	lcd.backlight();
+    lcd.begin();
+    lcd.backlight();
 }
 
-// Convert time indices to two-char form
-String TwoChar(int data_num) {
-	String str = String(data_num);
-	if (str.length() == 1) {
-		str = "0" + str;
-	}
-	return str;
+String lcd_twochar(int num) {
+    String str = String(num);
+    if (str.length() == 1) {
+        str = "0" + str;
+    }
+    return str;
 }
 
-// Display
-void lcd_control() {
-	static int lcd_TimeTracker = 0;
-	
-	if (!lcd_Locked) {
-		lcd_TimeTracker++;
-		String day, month, year, hour, minute, second;
-		String weekday[7] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
+void lcd_show_time(int day, int month, int year, int hour, int minute, int second, int weekday) {
+    if (!lcd_Locked) {
+        lcd.setCursor(0, 0);
+        String WeekDay[7] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
 
-		day = TwoChar(now.day());
-		month = TwoChar(now.month());
-		year = String(now.year() % 100);
-		hour = TwoChar(now.hour());
-		minute = TwoChar(now.minute());
-		second = TwoChar(now.second());
+        String DD = lcd_twochar(day);
+        String MM = lcd_twochar(month);
+        String YY = lcd_twochar(year % 100);
+        String hh = lcd_twochar(hour);
+        String mm = lcd_twochar(minute);
+        String ss = lcd_twochar(second);
 
-		// Always print out time
-		lcd.setCursor(1, 0);
-		lcd.print(hour + ":" + minute + " " + weekday[now.dayOfTheWeek()] + " " + day + "/" + month);
-		lcd.setCursor(0, 1);
-		lcd.print("                ");
-		lcd.setCursor(0, 1);
-		// Print out other info every 3 secs
-		if (lcd_TimeTracker <= 3) {
-			lcd.print("KK " + String(dht11_temp) + "C  " + String(dht11_humd) + "%");
-			if ((dht11_temp < 19) || (dht11_temp > 24)) {
-				lcd.setCursor(9, 1);
-				lcd.print("!");
-			}
-			if (dht11_humd <= 40) {
-				lcd.setCursor(14, 1);
-				lcd.print("!");
-			}
-		}
-		else if (lcd_TimeTracker <= 6) {
-			lcd.print("DD  " + String(tds_temp_temperature) + "C  " + String(tds_EC_ppm) + "ppm");
-			if ((tds_EC_ppm < 500) || (tds_EC_ppm > 800)) {
-				lcd.setCursor(15, 1);
-				lcd.print("!");
-			}
-		}
-		else if (lcd_TimeTracker <= 9) {
-			lcd.print("MUCDD  ");
-			switch (wls_waterlevel) {
-				case -1:
-					lcd.print("Thieu!");
-					break;
-				case 0:
-					lcd.print("DuDung");
-					break;
-				case 1:
-					lcd.print("QuaDay!");
-					break;
-				case 2:
-					lcd.print("...");
-			}
-			if (lcd_TimeTracker == 9) lcd_TimeTracker = 0;
-		}
-	}
+        lcd.setCursor(1, 0);
+        lcd.print(hh + ":" + mm + " " + WeekDay[weekday] + " " + DD + "/" + MM);
+    }
 }
 
-void Serial_Monitor() {
-	if (!Serial_Locked) {
-		// Read PIR
-		if (pir_read() == HIGH) {
-			Serial.println("+ PIR: Detecting motion!");
-		}
-		else {
-			Serial.println("+ PIR: Motion not detected");
-		}
-
-		// Read WLS
-		switch (wls_waterlevel) {
-			case -1:
-				Serial.println("+ WLS: Below LB!");
-				break;
-			case 0:
-				Serial.println("+ WLS: Between LB and UB!");
-				break;
-			case 1:
-				Serial.println("+ WLS: Above UB!");
-				break;
-			case 2:
-				Serial.println("+ WLS: Initializing...");
-		}
-
-		// Read DHT11
-		Serial.print("+ DHT11: ");
-		Serial.print("Temp: " + String(dht11_temp) + "C; ");
-		Serial.println("Humd: " + String(dht11_humd) + "%");
-
-		// Read TDS
-		Serial.print("+ TDS: ");
-		Serial.print("Temp: " + String(tds_temp_temperature) + "C; ");
-		Serial.println("Conc: " + String(tds_EC_ppm) + "ppm");
-		Serial.println("**********************************************");
-	}
+void lcd_clearline(int line) {
+    lcd.setCursor(0, line);
+    for (int i = 0; i < 16; i++) {
+        lcd.print(" ");
+    }
 }
 
-/* ========== MAIN PROGRAM ========== */
+void lcd_show_dht11() {
+    lcd_clearline(1);
+    lcd.setCursor(0, 1);
+    lcd.print("KK");
+    lcd.setCursor(5, 1);
+    lcd.print(String(dht11_temp) + "C");
+    lcd.setCursor(11, 1);
+    lcd.print(String(dht11_humd) + "%");
+}
 
+void lcd_show_wls() {
+    lcd_clearline(1);
+    lcd.setCursor(0, 1);
+    lcd.print("MucDD");
+    lcd.setCursor(8, 1);
+    switch (wls_waterlevel) {
+        case -1: {
+            lcd.print("Thieu!");            
+        }
+            break;
+        case 0: {
+            lcd.print("DuDung");
+        }
+            break;
+        case 1: {
+            lcd.print("QuaDay!");
+        }
+            break;
+        case 2: {
+            lcd.print("DangDoc..");
+        }
+            break;
+    }
+}
+
+void lcd_show_tds() {
+    lcd_clearline(1);
+    lcd.setCursor(0, 1);
+    lcd.print("DD");
+    lcd.setCursor(4, 1);
+    lcd.print(String(tds_temp_temperature) + "C");
+    lcd.setCursor(9, 1);
+    lcd.print(String(tds_EC_ppm) + "ppm");
+}
+
+void lcd_show_sensors() {
+    if ((!lcd_Locked) && (lcd_tracker < 9)) {
+        lcd_tracker++;
+        if (lcd_tracker <= 3) {
+            lcd_show_dht11();
+        }
+        else if (lcd_tracker <= 6) {
+            lcd_show_wls();
+        }
+        else {
+            lcd_show_tds();
+        }
+    }
+    if (!DayMode) {
+        if (lcd_tracker == 9) {
+            lcd_tracker = 0;
+        }
+    }
+}
+
+void lcd_show_ledActiveTime(int hour, int minute) {
+    if ((!lcd_Locked) && (DayMode) && (lcd_tracker >= 9)) {
+        lcd_tracker++;
+        lcd_clearline(1);
+        lcd.setCursor(0, 1);
+        lcd.print("DenSang");
+        lcd.setCursor(9, 1);
+        lcd.print(lcd_twochar(hour - DayStart) + ":" + lcd_twochar(minute));
+        if (lcd_tracker == 12) {
+            lcd_tracker == 0;
+        }
+    }
+}
+
+/* __________Serial Monitor__________ */
+// Time management
+unsigned long sm_LastActive;
+bool sm_Locked;
+const int sm_LockTime = 1;
+const int sm_OperateTime = 0;
+
+void sm_rtc(int day, int month, int year, int hour, int minute, int second) {
+    if (!sm_Locked) {
+        Serial.print("+ RTC: ");
+        Serial.print(String(day) + "/" + String(month) + "/" + String(year) + " - ");
+        Serial.println(String(hour) + ":" + String(minute) + ":" + String(second));     
+    }
+}
+
+void sm_dht11() {
+    if (!sm_Locked) {
+        Serial.print("+ DHT11: ");
+        Serial.println(String(dht11_temp) + "C - " + String(dht11_humd) + "%");
+    }
+
+}
+
+void sm_wls() {
+    if (!sm_Locked) {
+        Serial.print("+ WLS: ");
+        switch (wls_waterlevel) {
+            case -1: {
+                Serial.println("Below LB");         
+            }
+                break;
+            case 0: {
+                Serial.println("Between LB and UB");
+            }
+                break;
+            case 1: {
+                Serial.print("Above UB");
+            }
+                break;
+            case 2: {
+                Serial.print("Reading...");
+            }
+                break;
+        }
+    }
+}
+
+void sm_tds() {
+    if (!sm_Locked) {
+        Serial.print("+ TDS: ");
+        Serial.println(String(tds_temp_temperature) + "C - " + String(tds_EC_ppm) + "ppm"); 
+    }
+}
+
+/* ========== MAIN PROGRAM ==========*/
 void setup() {
-	Serial.begin(9600);
-	relay_setup();
-	pir_setup();
-	wls_setup();
-	tds_setup();
-	rtc_setup();
-	lcd_setup();
+    Serial.begin(9600);
+    rtc_setup();    
+    pir_setup();
+    relay_setup();
+    dht11_setup();
+    wls_setup();
+    tds_setup();
+    lcd_setup();
 }
 
 void loop() {
-	now = rtc.now();
-	CurrentTime = now.secondstime();
-	static int startup = 0;
+    DateTime now = rtc.now();
+    CurrentTime = now.secondstime();
+    static bool Initialized = false;
 
-	if (startup == 0) {
-		relay_pump_LastActive = CurrentTime;
-		dht11_LastActive = CurrentTime;
-		tds_LastActive = CurrentTime;
-		lcd_LastActive = CurrentTime;
-		Serial_LastActive = CurrentTime;
-		Serial.print("Initializing...");
-		lcd.setCursor(2, 1);
-		for (int i = 0; i < 5; i++) {
-			Serial.print(".");
-			lcd.print(".");
-			delay(500);
-		}
-		Serial.println();
-		// dht11_read(dht11_temp, dht11_humd);
-		lcd.clear();
-		if (wls_waterlevel != 2) {
-			startup = 1;
-		}
-	}
-	else {
-		Timer(relay_pump_LastActive, relay_pump_Locked, relay_pump_LockTime, relay_pump_OperateTime);
-		Timer(dht11_LastActive, dht11_Locked, dht11_LockTime, dht11_OperateTime);
-		Timer(tds_LastActive, tds_Locked, tds_LockTime, tds_OperateTime);     
-		Timer(lcd_LastActive, lcd_Locked, lcd_LockTime, lcd_OperateTime);
-		Timer(Serial_LastActive, Serial_Locked, Serial_LockTime, Serial_OperateTime);
-		relay_led_control();
-		relay_pump_control();
-		dht11_read(dht11_temp, dht11_humd);
-		wls_read(wls_waterlevel);
-		tds_read(tds_temp_temperature, tds_EC_ppm);
-		lcd_control();
-		Serial_Monitor();
-	}
+    if (!Initialized) {
+        // Set LastActive Time
+        dht11_LastActive = CurrentTime;
+        tds_LastActive = CurrentTime;
+        lcd_LastActive = CurrentTime;
+        relay_pump_LastActive = CurrentTime;
+        sm_LastActive = CurrentTime;
+
+        // Animation
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Starting");
+        for (int i = 0; i < 3; i++) {
+            lcd.print(".");
+            delay(500);
+        }
+        lcd.clear();
+
+        Initialized = true;     
+    }
+    else {
+        // Time management
+        DayModeCheck(now.hour());
+        Timer(dht11_LastActive, dht11_Locked, dht11_LockTime, dht11_OperateTime);
+        Timer(tds_LastActive, tds_Locked, tds_LockTime, tds_OperateTime);
+        Timer(lcd_LastActive, lcd_Locked, lcd_LockTime, lcd_OperateTime);
+        Timer(relay_pump_LastActive, relay_pump_Locked, relay_pump_LockTime, relay_pump_OperateTime);
+        Timer(sm_LastActive, sm_Locked, sm_LockTime, sm_OperateTime);
+
+        // Sensor reads
+        pir_read();
+        dht11_read();
+        wls_read();
+        tds_read();
+
+        // Relay control
+        relay_led_control();
+        relay_pump_control();
+
+        // Show data on display
+        lcd_show_time(now.day(), now.month(), now.year(), now.hour(), now.minute(), now.second(), now.dayOfTheWeek());
+        lcd_show_sensors();
+        lcd_show_ledActiveTime(now.hour(), now.minute());
+
+        // Serial monitor
+        sm_rtc(now.day(), now.month(), now.year(), now.hour(), now.minute(), now.second());
+        sm_dht11();
+        sm_wls();
+        sm_tds();
+    }
 }
