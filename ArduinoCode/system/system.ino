@@ -379,6 +379,7 @@ void lcd_show_time(int day, int month, int year, int hour, int minute, int secon
     if (!lcd_Locked) {
         lcd.setCursor(0, 0);
         String WeekDay[7] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
+        String WeekDay_vi[7] = {"CN", "T2", "T3", "T4", "T5", "T6", "T7"};
 
         String DD = lcd_twochar(day);
         String MM = lcd_twochar(month);
@@ -388,7 +389,7 @@ void lcd_show_time(int day, int month, int year, int hour, int minute, int secon
         String ss = lcd_twochar(second);
 
         lcd.setCursor(1, 0);
-        lcd.print(hh + ":" + mm + " " + WeekDay[weekday] + " " + DD + "/" + MM);
+        lcd.print(hh + ":" + mm + " " + WeekDay_vi[weekday] + " " + DD + "/" + MM);
     }
 }
 
@@ -473,7 +474,7 @@ void lcd_show_ledActiveTime(int hour, int minute) {
         lcd.setCursor(9, 1);
         lcd.print(lcd_twochar(hour - DayStart) + ":" + lcd_twochar(minute));
         if (lcd_tracker == 12) {
-            lcd_tracker == 0;
+            lcd_tracker = 0;
         }
     }
 }
@@ -528,7 +529,8 @@ void sm_wls() {
 void sm_tds() {
     if (!sm_Locked) {
         Serial.print("+ TDS: ");
-        Serial.println(String(tds_temp_temperature) + "C - " + String(tds_EC_ppm) + "ppm"); 
+        Serial.println(String(tds_temp_temperature) + "C - " + String(tds_EC_ppm) + "ppm");
+        Serial.println("LCD tracker: " + String(lcd_tracker));
     }
 }
 
