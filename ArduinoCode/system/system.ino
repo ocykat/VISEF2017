@@ -75,7 +75,7 @@ void Timer(unsigned long &LastActive, bool &Locked, int LockTime, int OperateTim
 }
 
 void DayModeCheck(int hour) {
-    if ((hour >= DayStart) && (hour <= DayEnd)) {
+    if ((hour >= DayStart) && (hour < DayEnd)) {
         DayMode = true;
     }
     else {
