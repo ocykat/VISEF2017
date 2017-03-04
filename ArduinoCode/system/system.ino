@@ -120,24 +120,24 @@ void relay_setup() {
 
 void relay_led_control() {
     if (DayMode) {
-        digitalWrite(relay_led_pin, HIGH);
+        digitalWrite(relay_led_pin, LOW);
     }
     else {
         if (pir_val == HIGH) {
-            digitalWrite(relay_led_pin, HIGH);
+            digitalWrite(relay_led_pin, LOW);
         }
         else {
-            digitalWrite(relay_led_pin, LOW);
+            digitalWrite(relay_led_pin, HIGH);
         }
     }
 }
 
 void relay_pump_control() {
     if (!relay_pump_Locked) {
-        digitalWrite(relay_pump_pin, HIGH);
+        digitalWrite(relay_pump_pin, LOW);
     }
     else {
-        digitalWrite(relay_pump_pin, LOW);
+        digitalWrite(relay_pump_pin, HIGH);
     }
 }
 
