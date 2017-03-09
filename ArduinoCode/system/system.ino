@@ -7,11 +7,10 @@ Arduino Model: Arduino Mega 2560
 /* ====== PIN LIST ====== */
 
 // LED Relays
-// LED Relays
-const int relay_vcc_pin = A0; // analog pin
-const int relay_led_pin = A1; // analog pin
-const int relay_pump_pin = A2; // analog pin
-// const int relay_gnd_pin = 7;
+const int relay_vcc_pin = A0;
+const int relay_led_pin = A1;
+const int relay_pump_pin = A2;
+const int relay_gnd_pin = 7;
 
 // PIR
 const int pir_out_pin = 50;
@@ -31,13 +30,13 @@ const int wls_gnd2_pin = 1;
 
 // TDS
 // tds_temp pins
-const int tds_onewire_bus = 36;
+const int tds_onewire_bus = 32;
 const int tds_temp_vcc_pin = 34;
 const int tds_temp_gnd_pin = 35;
 // tds_EC pins
 const int tds_EC_Aout_pin = A15; // analog OUT
-const int tds_EC_gnd_pin = 32;
-const int tds_EC_vcc_pin = 33;
+const int tds_EC_gnd_pin = 30;
+const int tds_EC_vcc_pin = 31;
 
 /* ========== COMPONENT SPECIFICATION ========== */
 
