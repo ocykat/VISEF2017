@@ -7,9 +7,9 @@ Arduino Model: Arduino Mega 2560
 /* ====== PIN LIST ====== */
 
 // LED Relays
-const int relay_vcc_pin = A0;
-const int relay_led_pin = A1;
-const int relay_pump_pin = A2;
+const int relay_vcc_pin = 8;
+const int relay_led_pin = 9;
+const int relay_pump_pin = 10;
 const int relay_gnd_pin = 7;
 
 // PIR
@@ -18,14 +18,14 @@ const int pir_vcc_pin = 52;
 const int pir_gnd_pin = 53;
 
 // DHT11
-const int dht11_out_pin = 42;
-const int dht11_vcc_pin = 44;
-const int dht11_gnd_pin = 45;
+const int dht11_out_pin = 44;
+const int dht11_vcc_pin = 46;
+const int dht11_gnd_pin = 47;
 
 // WLS
-const int wls_lb_pin = 38;
-const int wls_ub_pin = 36;
-const int wls_gnd1_pin = 39;
+const int wls_lb_pin = 40;
+const int wls_ub_pin = 41;
+const int wls_gnd1_pin = 38;
 const int wls_gnd2_pin = 1;
 
 // TDS
@@ -35,8 +35,8 @@ const int tds_temp_vcc_pin = 34;
 const int tds_temp_gnd_pin = 35;
 // tds_EC pins
 const int tds_EC_Aout_pin = A15; // analog OUT
-const int tds_EC_gnd_pin = 30;
-const int tds_EC_vcc_pin = 31;
+const int tds_EC_gnd_pin = 31;
+const int tds_EC_vcc_pin = 30;
 
 /* ========== COMPONENT SPECIFICATION ========== */
 
@@ -104,7 +104,7 @@ void pir_read() {
 unsigned long relay_pump_LastActive;
 bool relay_pump_Locked;
 const int relay_pump_LockTime = 300;
-const int relay_pump_OperateTime = 5;
+const int relay_pump_OperateTime = 3;
 
 void relay_setup() {
     pinMode(relay_vcc_pin, OUTPUT);

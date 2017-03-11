@@ -12,9 +12,9 @@ Arduino model: UNO
 RTC_DS1307 rtc;
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
-const int VCC1 = 8;
-const int VCC2 = 9;
-const int VCC3 = 3;
+const int VCC1 = 43;
+const int VCC2 = 45;
+// const int VCC3 = 3;
 
 void setup() {
     Serial.begin(9600);
@@ -41,10 +41,10 @@ void setup() {
 
     pinMode(VCC1, OUTPUT);
     pinMode(VCC2, OUTPUT);
-    pinMode(VCC3, OUTPUT);
+    // pinMode(VCC3, OUTPUT);
     digitalWrite(VCC1, HIGH);
     digitalWrite(VCC2, HIGH);
-    digitalWrite(VCC3, HIGH);
+    // digitalWrite(VCC3, HIGH);
 }
 
 String TwoChar(int data_num) {
@@ -72,7 +72,7 @@ void loop() {
 
     lcd.setCursor(2, 0);
     lcd.print(day + "/" + month + "/" + year + " " + weekday[now.dayOfTheWeek()]);
-    
+    Serial.println(day + "/" + month + "/" + year + " " + weekday[now.dayOfTheWeek()]);    
     lcd.setCursor(4, 1);
     lcd.print(hour + ":" + minute + ":" + second);
 
