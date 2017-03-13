@@ -23,8 +23,8 @@ String esp_response;
 bool esp_ReplyOK;
 
 // Access point - Wifi network
-String SSID = "DLINK_WIRELESS";
-String PASSWORD = "1234567890";
+String SSID = "FITA-HOTEL";
+String PASSWORD = "fita2017";
 
 void esp_flush() {
 	while (esp.available() > 0) {

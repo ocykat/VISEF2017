@@ -22,8 +22,10 @@ String esp_response;
 bool esp_ReplyOK;
 
 // Access point - Wifi network
-String SSID = "DLINK_WIRELESS";
-String PASSWORD = "1234567890";
+// String SSID = "DLINK_WIRELESS";
+// String PASSWORD = "1234567890";
+String SSID = "TOANCAU";
+String PASSWORD = "0917535859";
 
 // Potentiometer
 const int potentiometer_vcc_pin = 9;
