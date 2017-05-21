@@ -7,31 +7,31 @@ const int dht_out_pin = 7;
 dht DHT;
 
 void setup() {
-	Serial.begin(9600);
+    Serial.begin(9600);
 }
 
 void loop() {
-	int dht_check = DHT.read11(dht_out_pin);
-	// switch (dht_check) {
-	// 	case DHTLIB_OK: {
-	// 		Serial.println("OK");
-	// 	}
-	// 	break;
-	// 	case DHTLIB_ERROR_CHECKSUM: {
-	// 		Serial.println("CheckSumError!!");
-	// 	}
-	// 	break;
-	// 	case DHTLIB_ERROR_TIMEOUT: {
-	// 		Serial.println("TimeOutError!!");
-	// 	}
-	// 	break;
-	// 	default: {
-	// 		Serial.println("UnknownError!");
-	// 	}
-	// }
+    int dht_check = DHT.read11(dht_out_pin);
+    // switch (dht_check) {
+    //  case DHTLIB_OK: {
+    //      Serial.println("OK");
+    //  }
+    //  break;
+    //  case DHTLIB_ERROR_CHECKSUM: {
+    //      Serial.println("CheckSumError!!");
+    //  }
+    //  break;
+    //  case DHTLIB_ERROR_TIMEOUT: {
+    //      Serial.println("TimeOutError!!");
+    //  }
+    //  break;
+    //  default: {
+    //      Serial.println("UnknownError!");
+    //  }
+    // }
 
-	Serial.println(DHT.temperature);
-	Serial.println(DHT.humidity);
-	Serial.println("");
-	delay(2000);
+    Serial.println(DHT.temperature);
+    Serial.println(DHT.humidity);
+    Serial.println("");
+    delay(2000);
 }

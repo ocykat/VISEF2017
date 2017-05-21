@@ -8,11 +8,11 @@ linecount = 0
 max = 0
 
 for line in monitor:
-	i += 1
-	if i % 2 == 0: # lines start at 0 not 1, so the data is in the "even" lines
-		index = int(line)
-		data.append(index)
-		linecount += 1
+    i += 1
+    if i % 2 == 0: # lines start at 0 not 1, so the data is in the "even" lines
+        index = int(line)
+        data.append(index)
+        linecount += 1
 
 time = [j for j in range(0, linecount)]
 

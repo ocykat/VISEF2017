@@ -1,4 +1,5 @@
 #include <SoftwareSerial.h>
+#include <dht.h>
 
 // Pins
 const int esp_rx_pin = 6;
@@ -6,6 +7,10 @@ const int esp_tx_pin = 7;
 
 // ESP8266 object
 SoftwareSerial esp(esp_tx_pin, esp_rx_pin);
+
+// DHT11 object
+dht dht11;
+const int dht11_out_pin = 3;
 
 // Baudrate
 const int Serial_baudrate = 9600;
@@ -24,14 +29,16 @@ bool esp_ReplyOK;
 // Access point - Wifi network
 // String SSID = "DLINK_WIRELESS";
 // String PASSWORD = "1234567890";
+// String SSID = "TOANCAU";
+// String PASSWORD = "0917535859";
 String SSID = "Danato Alzheim's Phone";
 String PASSWORD = "12345678";
+// String SSID = "FITA-HOTEL";
+// String PASSWORD = "fita2017";
 
-// Potentiometer
-const int potentiometer_vcc_pin = 9;
-const int potentiometer_Aout_pin = A0;
-
-int anlval;
+// INPUT
+int dht11_temp;
+int dht11_humd;
 
 void esp_flush() {
 	while (esp.available() > 0) {
@@ -73,10 +80,6 @@ void setup() {
 	Serial.begin(Serial_baudrate);
 	esp.begin(esp_baudrate);
 
-	// Potentiometer
-	pinMode(potentiometer_vcc_pin, OUTPUT);
-	digitalWrite(potentiometer_vcc_pin, HIGH);
-
 	// Reset ESP8266
 	esp_SendCmd("AT+RST", "OK", "_EMPTY_", 1, 1000);
 	esp_CheckResult("AT+RST", "ESP has been reset!");
@@ -101,15 +104,23 @@ void setup() {
 }
 
 void loop() {
+	// Read dht11
+	dht11.read11(dht11_out_pin);
+	dht11_temp = dht11.temperature;
+	dht11_humd = dht11.humidity;
+
+
 	// Start a TCP connection
 	String start_TCP_cn_cmd = "AT+CIPSTART=\"TCP\",\"" + SERVER + "\"," + MAINPORT;
 	esp_SendCmd(start_TCP_cn_cmd, "OK", "_EMPTY_", 1, 3000);
 	esp_CheckResult(start_TCP_cn_cmd, "Connected to server!");
 	
 	// Send message
-	anlval = analogRead(A0);
-	String data = "GET /receiver.php?anlinp=" + String(anlval) + " HTTP/1.1\r\nHost: " + SERVER + "\r\n\r\n";
-	Serial.println("*****Analog input: " + String(anlval) + "*****");
+	String data = "GET /receiver.php?temp=" + String(dht11_temp) + "&humd=" + String(dht11_humd) + " HTTP/1.1\r\nHost: " + SERVER + "\r\n\r\n";
+	Serial.println("************************");
+	Serial.println("TEMPERATURE: " + String(dht11_temp));
+	Serial.println("HUMIDITY: " + String(dht11_humd));	
+	Serial.println("************************");
 	String data_StringLength = String(data.length());
 	String html_cmd = "AT+CIPSEND=" + data_StringLength;
 	esp_SendCmd(html_cmd, ">", "_EMPTY_", 1, 1000);
